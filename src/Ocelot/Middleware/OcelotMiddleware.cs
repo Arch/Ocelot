@@ -1,34 +1,33 @@
 ﻿using System.Collections.Generic;
 using Ocelot.Errors;
-using Ocelot.ScopedData;
+using Ocelot.Infrastructure.Provider;
 
 namespace Ocelot.Middleware
 {
     public abstract class OcelotMiddleware
     {
-        private readonly IScopedRequestDataRepository _scopedRequestDataRepository;
+        private readonly IDataProvider<List<Error>> _provider;
 
-        protected OcelotMiddleware(IScopedRequestDataRepository scopedRequestDataRepository)
+        protected OcelotMiddleware(IDataProvider<List<Error>> provider)
         {
-            _scopedRequestDataRepository = scopedRequestDataRepository;
+            _provider = provider;
         }
 
         public void SetPipelineError(List<Error> errors)
         {
-            _scopedRequestDataRepository.Add("OcelotMiddlewareError", true);
-            _scopedRequestDataRepository.Add("OcelotMiddlewareErrors", errors);
+            _provider.Set(errors);
         }
 
         public bool PipelineError()
         {
-            var response = _scopedRequestDataRepository.Get<bool>("OcelotMiddlewareError");
-            return response.Data;
+            var errors = _provider.Get();
+            return errors.Data != null && errors.Data.Count > 0;
         }
 
         public List<Error> GetPipelineErrors()
         {
-            var response = _scopedRequestDataRepository.Get<List<Error>>("OcelotMiddlewareErrors");
-            return response.Data;
+            var errors = _provider.Get();
+            return errors.Data;
         }
     }
 }

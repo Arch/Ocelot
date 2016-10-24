@@ -1,9 +1,11 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Ocelot.DownstreamRouteFinder;
+using Ocelot.Errors;
+using Ocelot.Infrastructure.Provider;
 using Ocelot.Middleware;
-using Ocelot.ScopedData;
 
 namespace Ocelot.HeaderBuilder.Middleware
 {
@@ -11,21 +13,22 @@ namespace Ocelot.HeaderBuilder.Middleware
     {
         private readonly RequestDelegate _next;
         private readonly IAddHeadersToRequest _addHeadersToRequest;
-        private readonly IScopedRequestDataRepository _scopedRequestDataRepository;
+        private readonly IDataProvider<DownstreamRoute> _dataProvider;
 
         public HttpRequestHeadersBuilderMiddleware(RequestDelegate next, 
-            IScopedRequestDataRepository scopedRequestDataRepository,
-            IAddHeadersToRequest addHeadersToRequest) 
-            : base(scopedRequestDataRepository)
+            IAddHeadersToRequest addHeadersToRequest,
+            IDataProvider<DownstreamRoute> dataProvider,
+            IDataProvider<List<Error>> errorProvider) 
+            : base(errorProvider)
         {
             _next = next;
             _addHeadersToRequest = addHeadersToRequest;
-            _scopedRequestDataRepository = scopedRequestDataRepository;
+            _dataProvider = dataProvider;
         }
 
         public async Task Invoke(HttpContext context)
         {
-            var downstreamRoute = _scopedRequestDataRepository.Get<DownstreamRoute>("DownstreamRoute");
+            var downstreamRoute = _dataProvider.Get();
 
             if (downstreamRoute.Data.ReRoute.ClaimsToHeaders.Any())
             {

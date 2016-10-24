@@ -17,6 +17,7 @@
         InstructionNotForClaimsError,
         UnauthorizedError,
         ClaimValueNotAuthorisedError,
-        UserDoesNotHaveClaimError
+        UserDoesNotHaveClaimError,
+        NoDataSetError
     }
 }

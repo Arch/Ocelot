@@ -1,8 +1,12 @@
+using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Ocelot.Errors;
+using Ocelot.Infrastructure.Provider;
 using Ocelot.Middleware;
 using Ocelot.RequestBuilder;
-using Ocelot.ScopedData;
+using Ocelot.Responder;
 
 namespace Ocelot.Requester.Middleware
 {
@@ -10,21 +14,25 @@ namespace Ocelot.Requester.Middleware
     {
         private readonly RequestDelegate _next;
         private readonly IHttpRequester _requester;
-        private readonly IScopedRequestDataRepository _scopedRequestDataRepository;
+        private readonly IDataProvider<Request> _requestDataProvider;
+        private readonly IHttpResponder _responder;
 
         public HttpRequesterMiddleware(RequestDelegate next, 
             IHttpRequester requester, 
-            IScopedRequestDataRepository scopedRequestDataRepository)
-            :base(scopedRequestDataRepository)
+            IDataProvider<List<Error>> errorProvider, 
+            IDataProvider<Request> requestDataProvider, 
+            IHttpResponder responder)
+            :base(errorProvider)
         {
             _next = next;
             _requester = requester;
-            _scopedRequestDataRepository = scopedRequestDataRepository;
+            _requestDataProvider = requestDataProvider;
+            _responder = responder;
         }
 
         public async Task Invoke(HttpContext context)
         {
-            var request = _scopedRequestDataRepository.Get<Request>("Request");
+            var request = _requestDataProvider.Get();
 
             if (request.IsError)
             {
@@ -40,7 +48,7 @@ namespace Ocelot.Requester.Middleware
                 return;
             }
 
-            _scopedRequestDataRepository.Add("Response", response.Data);            
+            await _responder.SetResponseOnContext(context, response.Data);
         }
     }
 }

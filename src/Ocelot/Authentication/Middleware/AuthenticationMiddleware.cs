@@ -6,31 +6,34 @@ using Ocelot.Authentication.Handler.Factory;
 using Ocelot.Configuration;
 using Ocelot.DownstreamRouteFinder;
 using Ocelot.Errors;
+using Ocelot.Infrastructure.Provider;
 using Ocelot.Middleware;
-using Ocelot.ScopedData;
 
 namespace Ocelot.Authentication.Middleware
 {
     public class AuthenticationMiddleware : OcelotMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly IScopedRequestDataRepository _scopedRequestDataRepository;
         private readonly IApplicationBuilder _app;
         private readonly IAuthenticationHandlerFactory _authHandlerFactory;
+        private readonly IDataProvider<DownstreamRoute> _dataProvider;
 
-        public AuthenticationMiddleware(RequestDelegate next, IApplicationBuilder app,
-            IScopedRequestDataRepository scopedRequestDataRepository, IAuthenticationHandlerFactory authHandlerFactory) 
-            : base(scopedRequestDataRepository)
+        public AuthenticationMiddleware(RequestDelegate next, 
+            IApplicationBuilder app,
+            IAuthenticationHandlerFactory authHandlerFactory, 
+            IDataProvider<DownstreamRoute> dataProvider,
+            IDataProvider<List<Error>> errorProvider) 
+            : base(errorProvider)
         {
             _next = next;
-            _scopedRequestDataRepository = scopedRequestDataRepository;
             _authHandlerFactory = authHandlerFactory;
+            _dataProvider = dataProvider;
             _app = app;
         }
 
         public async Task Invoke(HttpContext context)
         {
-            var downstreamRoute = _scopedRequestDataRepository.Get<DownstreamRoute>("DownstreamRoute");
+            var downstreamRoute = _dataProvider.Get();
 
             if (downstreamRoute.IsError)
             {

@@ -11,10 +11,11 @@ using Ocelot.Configuration;
 using Ocelot.Configuration.Builder;
 using Ocelot.DownstreamRouteFinder;
 using Ocelot.DownstreamRouteFinder.UrlMatcher;
+using Ocelot.Errors;
 using Ocelot.HeaderBuilder;
 using Ocelot.HeaderBuilder.Middleware;
+using Ocelot.Infrastructure.Provider;
 using Ocelot.Responses;
-using Ocelot.ScopedData;
 using TestStack.BDDfy;
 using Xunit;
 
@@ -22,24 +23,27 @@ namespace Ocelot.UnitTests.HeaderBuilder
 {
     public class HttpRequestHeadersBuilderMiddlewareTests : IDisposable
     {
-        private readonly Mock<IScopedRequestDataRepository> _scopedRepository;
         private readonly Mock<IAddHeadersToRequest> _addHeaders;
         private readonly string _url;
         private readonly TestServer _server;
         private readonly HttpClient _client;
         private Response<DownstreamRoute> _downstreamRoute;
         private HttpResponseMessage _result;
+        private readonly Mock<IDataProvider<DownstreamRoute>> _provider;
+        private readonly Mock<IDataProvider<List<Error>>> _errorProvider;
 
         public HttpRequestHeadersBuilderMiddlewareTests()
         {
             _url = "http://localhost:51879";
-            _scopedRepository = new Mock<IScopedRequestDataRepository>();
             _addHeaders = new Mock<IAddHeadersToRequest>();
+            _provider = new Mock<IDataProvider<DownstreamRoute>>();
+            _errorProvider = new Mock<IDataProvider<List<Error>>>();
             var builder = new WebHostBuilder()
               .ConfigureServices(x =>
               {
+                  x.AddSingleton(_errorProvider.Object);
+                  x.AddSingleton(_provider.Object);
                   x.AddSingleton(_addHeaders.Object);
-                  x.AddSingleton(_scopedRepository.Object);
               })
               .UseUrls(_url)
               .UseKestrel()
@@ -97,8 +101,8 @@ namespace Ocelot.UnitTests.HeaderBuilder
         private void GivenTheDownStreamRouteIs(DownstreamRoute downstreamRoute)
         {
             _downstreamRoute = new OkResponse<DownstreamRoute>(downstreamRoute);
-            _scopedRepository
-                .Setup(x => x.Get<DownstreamRoute>(It.IsAny<string>()))
+            _provider
+                .Setup(x => x.Get())
                 .Returns(_downstreamRoute);
         }
 

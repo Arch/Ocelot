@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -7,11 +8,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using Ocelot.DownstreamUrlCreator;
+using Ocelot.Errors;
+using Ocelot.Infrastructure.Provider;
 using Ocelot.RequestBuilder;
 using Ocelot.RequestBuilder.Builder;
 using Ocelot.RequestBuilder.Middleware;
 using Ocelot.Responses;
-using Ocelot.ScopedData;
 using TestStack.BDDfy;
 using Xunit;
 
@@ -20,25 +23,31 @@ namespace Ocelot.UnitTests.RequestBuilder
     public class HttpRequestBuilderMiddlewareTests : IDisposable
     {
         private readonly Mock<IRequestBuilder> _requestBuilder;
-        private readonly Mock<IScopedRequestDataRepository> _scopedRepository;
+        private readonly Mock<IDataProvider<List<Error>>> _errorProvider;  
         private readonly string _url;
         private readonly TestServer _server;
         private readonly HttpClient _client;
         private HttpResponseMessage _result;
         private OkResponse<Request> _request;
-        private OkResponse<string> _downstreamUrl;
+        private OkResponse<DownstreamUrl> _downstreamUrl;
+        private readonly Mock<IDataProvider<DownstreamUrl>> _urlProvider;
+        private readonly Mock<IDataProvider<Request>> _requestDataProvider;
 
         public HttpRequestBuilderMiddlewareTests()
         {
             _url = "http://localhost:51879";
             _requestBuilder = new Mock<IRequestBuilder>();
-            _scopedRepository = new Mock<IScopedRequestDataRepository>();
+            _errorProvider = new Mock<IDataProvider<List<Error>>>();
+            _urlProvider = new Mock<IDataProvider<DownstreamUrl>>();
+            _requestDataProvider = new Mock<IDataProvider<Request>>();
 
             var builder = new WebHostBuilder()
               .ConfigureServices(x =>
               {
+                  x.AddSingleton(_requestDataProvider.Object);
+                  x.AddSingleton(_urlProvider.Object);
+                  x.AddSingleton(_errorProvider.Object);
                   x.AddSingleton(_requestBuilder.Object);
-                  x.AddSingleton(_scopedRepository.Object);
               })
               .UseUrls(_url)
               .UseKestrel()
@@ -75,8 +84,8 @@ namespace Ocelot.UnitTests.RequestBuilder
 
         private void ThenTheScopedDataRepositoryIsCalledCorrectly()
         {
-            _scopedRepository
-                .Verify(x => x.Add("Request", _request.Data), Times.Once());
+            _requestDataProvider
+                .Verify(x => x.Set(_request.Data), Times.Once());
         }
 
         private void WhenICallTheMiddleware()
@@ -86,9 +95,9 @@ namespace Ocelot.UnitTests.RequestBuilder
 
         private void GivenTheDownStreamUrlIs(string downstreamUrl)
         {
-            _downstreamUrl = new OkResponse<string>(downstreamUrl);
-            _scopedRepository
-                .Setup(x => x.Get<string>(It.IsAny<string>()))
+            _downstreamUrl = new OkResponse<DownstreamUrl>(new DownstreamUrl(downstreamUrl));
+            _urlProvider
+                .Setup(x => x.Get())
                 .Returns(_downstreamUrl);
         }
 

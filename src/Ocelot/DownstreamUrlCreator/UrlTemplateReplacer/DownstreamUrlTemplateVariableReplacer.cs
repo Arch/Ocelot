@@ -6,18 +6,18 @@ namespace Ocelot.DownstreamUrlCreator.UrlTemplateReplacer
 {
     public class DownstreamUrlTemplateVariableReplacer : IDownstreamUrlTemplateVariableReplacer
     {
-        public Response<string> ReplaceTemplateVariables(DownstreamRoute downstreamRoute)
+        public Response<DownstreamUrl> ReplaceTemplateVariables(DownstreamRoute downstreamRoute)
         {
-            var upstreamUrl = new StringBuilder();
+            var downstreamUrl = new StringBuilder();
 
-            upstreamUrl.Append(downstreamRoute.ReRoute.DownstreamTemplate);
+            downstreamUrl.Append(downstreamRoute.ReRoute.DownstreamTemplate);
 
             foreach (var templateVarAndValue in downstreamRoute.TemplateVariableNameAndValues)
             {
-                upstreamUrl.Replace(templateVarAndValue.TemplateVariableName, templateVarAndValue.TemplateVariableValue);
+                downstreamUrl.Replace(templateVarAndValue.TemplateVariableName, templateVarAndValue.TemplateVariableValue);
             }
 
-            return new OkResponse<string>(upstreamUrl.ToString());
+            return new OkResponse<DownstreamUrl>(new DownstreamUrl(downstreamUrl.ToString()));
         }
     }
 }

@@ -1,16 +1,20 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using Ocelot.Errors;
+using Ocelot.Infrastructure.Provider;
 using Ocelot.RequestBuilder;
 using Ocelot.Requester;
 using Ocelot.Requester.Middleware;
+using Ocelot.Responder;
 using Ocelot.Responses;
-using Ocelot.ScopedData;
 using TestStack.BDDfy;
 using Xunit;
 
@@ -19,25 +23,31 @@ namespace Ocelot.UnitTests.Requester
     public class HttpRequesterMiddlewareTests : IDisposable
     {
         private readonly Mock<IHttpRequester> _requester;
-        private readonly Mock<IScopedRequestDataRepository> _scopedRepository;
         private readonly string _url;
         private readonly TestServer _server;
         private readonly HttpClient _client;
         private HttpResponseMessage _result;
         private OkResponse<HttpResponseMessage> _response;
         private OkResponse<Request> _request;
-
+        private readonly Mock<IDataProvider<List<Error>>> _errorProvider;
+        private readonly Mock<IDataProvider<Request>> _requestDataProvider;
+        private readonly Mock<IHttpResponder> _responder;
+ 
         public HttpRequesterMiddlewareTests()
         {
             _url = "http://localhost:51879";
             _requester = new Mock<IHttpRequester>();
-            _scopedRepository = new Mock<IScopedRequestDataRepository>();
+            _errorProvider = new Mock<IDataProvider<List<Error>>>();
+            _requestDataProvider = new Mock<IDataProvider<Request>>();
+            _responder = new Mock<IHttpResponder>();
 
             var builder = new WebHostBuilder()
               .ConfigureServices(x =>
               {
+                  x.AddSingleton(_responder.Object);
+                  x.AddSingleton(_requestDataProvider.Object);
+                  x.AddSingleton(_errorProvider.Object);
                   x.AddSingleton(_requester.Object);
-                  x.AddSingleton(_scopedRepository.Object);
               })
               .UseUrls(_url)
               .UseKestrel()
@@ -59,7 +69,7 @@ namespace Ocelot.UnitTests.Requester
             this.Given(x => x.GivenTheRequestIs(new Request(new HttpRequestMessage(),new CookieContainer())))
                 .And(x => x.GivenTheRequesterReturns(new HttpResponseMessage()))
                 .When(x => x.WhenICallTheMiddleware())
-                .Then(x => x.ThenTheScopedDataRepositoryIsCalledCorrectly())
+                .Then(x => x.TheDataProviderIsCalledCorrectly())
                 .BDDfy();
         }
 
@@ -71,10 +81,10 @@ namespace Ocelot.UnitTests.Requester
                 .ReturnsAsync(_response);
         }
 
-        private void ThenTheScopedDataRepositoryIsCalledCorrectly()
+        private void TheDataProviderIsCalledCorrectly()
         {
-            _scopedRepository
-                .Verify(x => x.Add("Response", _response.Data), Times.Once());
+            _responder
+                .Verify(x => x.SetResponseOnContext(It.IsAny<HttpContext>(), _response.Data), Times.Once());
         }
 
         private void WhenICallTheMiddleware()
@@ -85,8 +95,8 @@ namespace Ocelot.UnitTests.Requester
         private void GivenTheRequestIs(Request request)
         {
             _request = new OkResponse<Request>(request);
-            _scopedRepository
-                .Setup(x => x.Get<Request>(It.IsAny<string>()))
+            _requestDataProvider
+                .Setup(x => x.Get())
                 .Returns(_request);
         }
 

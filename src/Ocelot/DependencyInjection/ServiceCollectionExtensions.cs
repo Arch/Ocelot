@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Collections.Generic;
+using System.Net.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,14 +13,18 @@ using Ocelot.Configuration.Provider;
 using Ocelot.Configuration.Repository;
 using Ocelot.Configuration.Validator;
 using Ocelot.Configuration.Yaml;
+using Ocelot.DownstreamRouteFinder;
 using Ocelot.DownstreamRouteFinder.Finder;
 using Ocelot.DownstreamRouteFinder.UrlMatcher;
+using Ocelot.DownstreamUrlCreator;
 using Ocelot.DownstreamUrlCreator.UrlTemplateReplacer;
+using Ocelot.Errors;
 using Ocelot.HeaderBuilder;
+using Ocelot.Infrastructure.Provider;
+using Ocelot.RequestBuilder;
 using Ocelot.RequestBuilder.Builder;
 using Ocelot.Requester;
 using Ocelot.Responder;
-using Ocelot.ScopedData;
 
 namespace Ocelot.DependencyInjection
 {
@@ -64,10 +70,10 @@ namespace Ocelot.DependencyInjection
             services.AddSingleton<IAuthenticationHandlerFactory, AuthenticationHandlerFactory>();
             services.AddSingleton<IAuthenticationHandlerCreator, AuthenticationHandlerCreator>();
 
-            // see this for why we register this as singleton http://stackoverflow.com/questions/37371264/invalidoperationexception-unable-to-resolve-service-for-type-microsoft-aspnetc
-            // could maybe use a scoped data repository
-            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            services.AddScoped<IScopedRequestDataRepository, ScopedRequestDataRepository>();
+            services.AddScoped<IDataProvider<DownstreamRoute>, DataProvider<DownstreamRoute>>();
+            services.AddScoped<IDataProvider<List<Error>>, DataProvider<List<Error>>>();
+            services.AddScoped<IDataProvider<DownstreamUrl>, DataProvider<DownstreamUrl>>();
+            services.AddScoped<IDataProvider<Request>, DataProvider<Request>>();
 
             return services;
         }

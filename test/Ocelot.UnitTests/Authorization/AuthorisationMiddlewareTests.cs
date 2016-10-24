@@ -11,8 +11,9 @@ using Ocelot.Authorisation;
 using Ocelot.Configuration.Builder;
 using Ocelot.DownstreamRouteFinder;
 using Ocelot.DownstreamRouteFinder.UrlMatcher;
+using Ocelot.Errors;
+using Ocelot.Infrastructure.Provider;
 using Ocelot.Responses;
-using Ocelot.ScopedData;
 using TestStack.BDDfy;
 using Xunit;
 
@@ -22,24 +23,27 @@ namespace Ocelot.UnitTests.Authorization
 
     public class AuthorisationMiddlewareTests : IDisposable
     {
-        private readonly Mock<IScopedRequestDataRepository> _scopedRepository;
         private readonly Mock<IAuthoriser> _authService;
         private readonly string _url;
         private readonly TestServer _server;
         private readonly HttpClient _client;
         private HttpResponseMessage _result;
         private OkResponse<DownstreamRoute> _downstreamRoute;
+        private readonly Mock<IDataProvider<DownstreamRoute>> _provider;
+        private readonly Mock<IDataProvider<List<Error>>> _errorProvider;
 
         public AuthorisationMiddlewareTests()
         {
             _url = "http://localhost:51879";
-            _scopedRepository = new Mock<IScopedRequestDataRepository>();
             _authService = new Mock<IAuthoriser>();
+            _errorProvider = new Mock<IDataProvider<List<Error>>>();
+            _provider = new Mock<IDataProvider<DownstreamRoute>>();
             var builder = new WebHostBuilder()
               .ConfigureServices(x =>
               {
+                  x.AddSingleton(_errorProvider.Object);
+                  x.AddSingleton(_provider.Object);
                   x.AddSingleton(_authService.Object);
-                  x.AddSingleton(_scopedRepository.Object);
               })
               .UseUrls(_url)
               .UseKestrel()
@@ -82,8 +86,8 @@ namespace Ocelot.UnitTests.Authorization
         private void GivenTheDownStreamRouteIs(DownstreamRoute downstreamRoute)
         {
             _downstreamRoute = new OkResponse<DownstreamRoute>(downstreamRoute);
-            _scopedRepository
-                .Setup(x => x.Get<DownstreamRoute>(It.IsAny<string>()))
+            _provider
+                .Setup(x => x.Get())
                 .Returns(_downstreamRoute);
         }
 

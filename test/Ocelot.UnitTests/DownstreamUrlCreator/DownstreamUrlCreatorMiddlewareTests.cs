@@ -9,10 +9,12 @@ using Moq;
 using Ocelot.Configuration.Builder;
 using Ocelot.DownstreamRouteFinder;
 using Ocelot.DownstreamRouteFinder.UrlMatcher;
+using Ocelot.DownstreamUrlCreator;
 using Ocelot.DownstreamUrlCreator.Middleware;
 using Ocelot.DownstreamUrlCreator.UrlTemplateReplacer;
+using Ocelot.Errors;
+using Ocelot.Infrastructure.Provider;
 using Ocelot.Responses;
-using Ocelot.ScopedData;
 using TestStack.BDDfy;
 using Xunit;
 
@@ -21,25 +23,31 @@ namespace Ocelot.UnitTests.DownstreamUrlCreator
     public class DownstreamUrlCreatorMiddlewareTests : IDisposable
     {
         private readonly Mock<IDownstreamUrlTemplateVariableReplacer> _downstreamUrlTemplateVariableReplacer;
-        private readonly Mock<IScopedRequestDataRepository> _scopedRepository;
         private readonly string _url;
         private readonly TestServer _server;
         private readonly HttpClient _client;
         private Response<DownstreamRoute> _downstreamRoute;
         private HttpResponseMessage _result;
-        private OkResponse<string> _downstreamUrl;
+        private OkResponse<DownstreamUrl> _downstreamUrl;
+        private readonly Mock<IDataProvider<DownstreamRoute>> _provider;
+        private readonly Mock<IDataProvider<List<Error>>> _errorProvider;
+        private readonly Mock<IDataProvider<DownstreamUrl>> _urlProvider;
 
         public DownstreamUrlCreatorMiddlewareTests()
         {
             _url = "http://localhost:51879";
             _downstreamUrlTemplateVariableReplacer = new Mock<IDownstreamUrlTemplateVariableReplacer>();
-            _scopedRepository = new Mock<IScopedRequestDataRepository>();
+            _provider = new Mock<IDataProvider<DownstreamRoute>>();
+            _errorProvider = new Mock<IDataProvider<List<Error>>>();
+            _urlProvider = new Mock<IDataProvider<DownstreamUrl>>();
 
             var builder = new WebHostBuilder()
               .ConfigureServices(x =>
               {
+                  x.AddSingleton(_urlProvider.Object);
+                  x.AddSingleton(_errorProvider.Object);
+                  x.AddSingleton(_provider.Object);
                   x.AddSingleton(_downstreamUrlTemplateVariableReplacer.Object);
-                  x.AddSingleton(_scopedRepository.Object);
               })
               .UseUrls(_url)
               .UseKestrel()
@@ -67,7 +75,7 @@ namespace Ocelot.UnitTests.DownstreamUrlCreator
 
         private void TheUrlReplacerReturns(string downstreamUrl)
         {
-            _downstreamUrl = new OkResponse<string>(downstreamUrl);
+            _downstreamUrl = new OkResponse<DownstreamUrl>(new DownstreamUrl(downstreamUrl));
             _downstreamUrlTemplateVariableReplacer
                 .Setup(x => x.ReplaceTemplateVariables(It.IsAny<DownstreamRoute>()))
                 .Returns(_downstreamUrl);
@@ -75,8 +83,8 @@ namespace Ocelot.UnitTests.DownstreamUrlCreator
 
         private void ThenTheScopedDataRepositoryIsCalledCorrectly()
         {
-            _scopedRepository
-                .Verify(x => x.Add("DownstreamUrl", _downstreamUrl.Data), Times.Once());
+            _urlProvider
+                .Verify(x => x.Set(_downstreamUrl.Data), Times.Once());
         }
 
         private void WhenICallTheMiddleware()
@@ -87,8 +95,8 @@ namespace Ocelot.UnitTests.DownstreamUrlCreator
         private void GivenTheDownStreamRouteIs(DownstreamRoute downstreamRoute)
         {
             _downstreamRoute = new OkResponse<DownstreamRoute>(downstreamRoute);
-            _scopedRepository
-                .Setup(x => x.Get<DownstreamRoute>(It.IsAny<string>()))
+            _provider
+                .Setup(x => x.Get())
                 .Returns(_downstreamRoute);
         }
 

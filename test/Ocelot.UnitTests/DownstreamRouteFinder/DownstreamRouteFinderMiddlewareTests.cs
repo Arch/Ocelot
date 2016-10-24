@@ -11,8 +11,9 @@ using Ocelot.DownstreamRouteFinder;
 using Ocelot.DownstreamRouteFinder.Finder;
 using Ocelot.DownstreamRouteFinder.Middleware;
 using Ocelot.DownstreamRouteFinder.UrlMatcher;
+using Ocelot.Errors;
+using Ocelot.Infrastructure.Provider;
 using Ocelot.Responses;
-using Ocelot.ScopedData;
 using TestStack.BDDfy;
 using Xunit;
 
@@ -21,24 +22,26 @@ namespace Ocelot.UnitTests.DownstreamRouteFinder
     public class DownstreamRouteFinderMiddlewareTests : IDisposable
     {
         private readonly Mock<IDownstreamRouteFinder> _downstreamRouteFinder;
-        private readonly Mock<IScopedRequestDataRepository> _scopedRepository;
         private readonly string _url;
         private readonly TestServer _server;
         private readonly HttpClient _client;
         private Response<DownstreamRoute> _downstreamRoute;
         private HttpResponseMessage _result;
+        private Mock<IDataProvider<DownstreamRoute>> _provider;
+        private Mock<IDataProvider<List<Error>>> _errorProvider;
 
         public DownstreamRouteFinderMiddlewareTests()
         {
             _url = "http://localhost:51879";
             _downstreamRouteFinder = new Mock<IDownstreamRouteFinder>();
-            _scopedRepository = new Mock<IScopedRequestDataRepository>();
-
+            _provider = new Mock<IDataProvider<DownstreamRoute>>();
+            _errorProvider = new Mock<IDataProvider<List<Error>>>();
             var builder = new WebHostBuilder()
               .ConfigureServices(x =>
               {
+                  x.AddSingleton(_errorProvider.Object);
+                  x.AddSingleton(_provider.Object);
                   x.AddSingleton(_downstreamRouteFinder.Object);
-                  x.AddSingleton(_scopedRepository.Object);
               })
               .UseUrls(_url)
               .UseKestrel()
@@ -65,8 +68,8 @@ namespace Ocelot.UnitTests.DownstreamRouteFinder
 
         private void ThenTheScopedDataRepositoryIsCalledCorrectly()
         {
-            _scopedRepository
-                .Verify(x => x.Add("DownstreamRoute", _downstreamRoute.Data), Times.Once());
+            _provider
+                .Verify(x => x.Set(_downstreamRoute.Data), Times.Once());
         }
 
         private void WhenICallTheMiddleware()

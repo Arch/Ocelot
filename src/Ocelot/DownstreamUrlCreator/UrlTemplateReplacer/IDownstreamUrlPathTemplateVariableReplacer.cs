@@ -5,6 +5,6 @@ namespace Ocelot.DownstreamUrlCreator.UrlTemplateReplacer
 {
     public interface IDownstreamUrlTemplateVariableReplacer
     {
-        Response<string> ReplaceTemplateVariables(DownstreamRoute downstreamRoute);   
+        Response<DownstreamUrl> ReplaceTemplateVariables(DownstreamRoute downstreamRoute);   
     }
 }

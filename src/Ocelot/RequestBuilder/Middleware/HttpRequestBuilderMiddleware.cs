@@ -1,30 +1,37 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Ocelot.DownstreamUrlCreator;
+using Ocelot.Errors;
+using Ocelot.Infrastructure.Provider;
 using Ocelot.Middleware;
 using Ocelot.RequestBuilder.Builder;
-using Ocelot.ScopedData;
 
 namespace Ocelot.RequestBuilder.Middleware
 {
     public class HttpRequestBuilderMiddleware : OcelotMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly IScopedRequestDataRepository _scopedRequestDataRepository;
         private readonly IRequestBuilder _requestBuilder;
+        private readonly IDataProvider<DownstreamUrl> _urlDataProvider;
+        private readonly IDataProvider<Request> _requestDataProvider;
 
         public HttpRequestBuilderMiddleware(RequestDelegate next, 
-            IScopedRequestDataRepository scopedRequestDataRepository, 
-            IRequestBuilder requestBuilder)
-            :base(scopedRequestDataRepository)
+            IRequestBuilder requestBuilder,
+            IDataProvider<List<Error>> errorProvider, 
+            IDataProvider<DownstreamUrl> urlDataProvider, 
+            IDataProvider<Request> requestDataProvider)
+            :base(errorProvider)
         {
             _next = next;
-            _scopedRequestDataRepository = scopedRequestDataRepository;
             _requestBuilder = requestBuilder;
+            _urlDataProvider = urlDataProvider;
+            _requestDataProvider = requestDataProvider;
         }
 
         public async Task Invoke(HttpContext context)
         {
-            var downstreamUrl = _scopedRequestDataRepository.Get<string>("DownstreamUrl");
+            var downstreamUrl = _urlDataProvider.Get();
 
             if (downstreamUrl.IsError)
             {
@@ -33,7 +40,7 @@ namespace Ocelot.RequestBuilder.Middleware
             }
 
             var request = await _requestBuilder
-              .Build(context.Request.Method, downstreamUrl.Data, context.Request.Body,
+              .Build(context.Request.Method, downstreamUrl.Data.Value, context.Request.Body,
               context.Request.Headers, context.Request.Cookies, context.Request.QueryString.Value, context.Request.ContentType);
 
             if (request.IsError)
@@ -42,8 +49,8 @@ namespace Ocelot.RequestBuilder.Middleware
                 return;
             }
 
-            _scopedRequestDataRepository.Add("Request", request.Data);
-
+            _requestDataProvider.Set(request.Data);
+            
             await _next.Invoke(context);
         }
     }

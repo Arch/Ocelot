@@ -10,7 +10,7 @@ namespace Ocelot.Responder
     /// </summary>
     public class HttpContextResponder : IHttpResponder
     {
-        public async Task<HttpContext> CreateResponse(HttpContext context, HttpResponseMessage response)
+        public async Task<HttpContext> SetResponseOnContext(HttpContext context, HttpResponseMessage response)
         {
             context.Response.OnStarting(x =>
             {

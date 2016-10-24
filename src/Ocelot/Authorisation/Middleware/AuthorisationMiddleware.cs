@@ -1,32 +1,33 @@
-﻿namespace Ocelot.Authorisation.Middleware
-{
-    using System.Collections.Generic;
-    using System.Threading.Tasks;
-    using DownstreamRouteFinder;
-    using Errors;
-    using Microsoft.AspNetCore.Http;
-    using Ocelot.Middleware;
-    using ScopedData;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Ocelot.DownstreamRouteFinder;
+using Ocelot.Errors;
+using Ocelot.Infrastructure.Provider;
+using Ocelot.Middleware;
 
+namespace Ocelot.Authorisation.Middleware
+{
     public class AuthorisationMiddleware : OcelotMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly IScopedRequestDataRepository _scopedRequestDataRepository;
         private readonly IAuthoriser _authoriser;
+        private readonly IDataProvider<DownstreamRoute> _dataProvider;
 
         public AuthorisationMiddleware(RequestDelegate next,
-            IScopedRequestDataRepository scopedRequestDataRepository,
-            IAuthoriser authoriser)
-            : base(scopedRequestDataRepository)
+            IAuthoriser authoriser,
+            IDataProvider<DownstreamRoute> dataProvider,
+            IDataProvider<List<Error>> errorProvider)
+            : base(errorProvider)
         {
             _next = next;
-            _scopedRequestDataRepository = scopedRequestDataRepository;
             _authoriser = authoriser;
+            _dataProvider = dataProvider;
         }
 
         public async Task Invoke(HttpContext context)
         {
-            var downstreamRoute = _scopedRequestDataRepository.Get<DownstreamRoute>("DownstreamRoute");
+            var downstreamRoute = _dataProvider.Get();
 
             if (downstreamRoute.IsError)
             {
