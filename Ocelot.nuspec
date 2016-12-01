@@ -38,7 +38,7 @@
     </dependencies>
   </metadata>
   <files>
-        <file src="src\Ocelot\bin\Release\netcoreapp1.4\Ocelot.dll" target="lib\netstandard1.4" />
-        <file src="src\Ocelot\bin\Release\netcoreapp1.4\Ocelot.pdb" target="lib\netstandard1.4" />
+        <file src="src\Ocelot\bin\Release\netcoreapp1.0\Ocelot.dll" target="lib\netcoreapp1.0" />
+        <file src="src\Ocelot\bin\Release\netcoreapp1.0\Ocelot.pdb" target="lib\netcoreapp1.0" />
   </files>
 </package>
