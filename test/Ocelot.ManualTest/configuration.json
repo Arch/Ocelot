@@ -147,5 +147,8 @@
     ],
     "GlobalConfiguration": {
         "RequestIdKey": "OcRequestId"
+    },
+    "AdministrationSettings": {
+        "AdminPagePath": "/dashboard" 
     }
 }

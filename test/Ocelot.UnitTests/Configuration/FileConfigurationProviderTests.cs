@@ -32,9 +32,9 @@ namespace Ocelot.UnitTests.Configuration
         [Fact]
         public void should_get_config()
         {
-            this.Given(x => x.GivenTheRepoReturns(new OkResponse<IOcelotConfiguration>(new OcelotConfiguration(new List<ReRoute>()))))
+            this.Given(x => x.GivenTheRepoReturns(new OkResponse<IOcelotConfiguration>(new OcelotConfiguration(new List<ReRoute>(), new AdminstrationSettings(string.Empty)))))
                 .When(x => x.WhenIGetTheConfig())
-                .Then(x => x.TheFollowingIsReturned(new OkResponse<IOcelotConfiguration>(new OcelotConfiguration(new List<ReRoute>()))))
+                .Then(x => x.TheFollowingIsReturned(new OkResponse<IOcelotConfiguration>(new OcelotConfiguration(new List<ReRoute>(), new AdminstrationSettings(string.Empty)))))
                 .BDDfy();
         }
 
@@ -42,9 +42,9 @@ namespace Ocelot.UnitTests.Configuration
         public void should_create_config_if_it_doesnt_exist()
         {
             this.Given(x => x.GivenTheRepoReturns(new OkResponse<IOcelotConfiguration>(null)))
-                .And(x => x.GivenTheCreatorReturns(new OkResponse<IOcelotConfiguration>(new OcelotConfiguration(new List<ReRoute>()))))
+                .And(x => x.GivenTheCreatorReturns(new OkResponse<IOcelotConfiguration>(new OcelotConfiguration(new List<ReRoute>(), new AdminstrationSettings(string.Empty)))))
                 .When(x => x.WhenIGetTheConfig())
-                .Then(x => x.TheFollowingIsReturned(new OkResponse<IOcelotConfiguration>(new OcelotConfiguration(new List<ReRoute>()))))
+                .Then(x => x.TheFollowingIsReturned(new OkResponse<IOcelotConfiguration>(new OcelotConfiguration(new List<ReRoute>(), new AdminstrationSettings(string.Empty)))))
                 .BDDfy();
         }
 

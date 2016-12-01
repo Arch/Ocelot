@@ -27,6 +27,11 @@ using Ocelot.QueryStrings;
 using Ocelot.Request.Builder;
 using Ocelot.Requester;
 using Ocelot.Responder;
+using Ocelot.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Ocelot.Models;
+using Ocelot.Services;
 
 namespace Ocelot.DependencyInjection
 {
@@ -54,7 +59,7 @@ namespace Ocelot.DependencyInjection
             return services;
         }
 
-        public static IServiceCollection AddOcelot(this IServiceCollection services)
+        public static IServiceCollection AddOcelot(this IServiceCollection services, ServiceConfiguration serviceConfiguration)
         {
             services.AddMvcCore().AddJsonFormatters();
             services.AddLogging();
@@ -82,6 +87,19 @@ namespace Ocelot.DependencyInjection
             // could maybe use a scoped data repository
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddScoped<IRequestScopedDataRepository, HttpDataRepository>();
+
+            services.AddDbContext<ApplicationDbContext>(options =>
+              options.UseSqlServer(serviceConfiguration.ConnectionString));
+
+            services.AddIdentity<ApplicationUser, IdentityRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
+
+            services.AddMvc();
+
+            // Add application services.
+            services.AddTransient<IEmailSender, AuthMessageSender>();
+            services.AddTransient<ISmsSender, AuthMessageSender>();
 
             return services;
         }

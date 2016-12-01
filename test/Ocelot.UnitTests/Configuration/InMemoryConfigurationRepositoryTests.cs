@@ -86,6 +86,8 @@ namespace Ocelot.UnitTests.Configuration
             {
                 new ReRouteBuilder().WithDownstreamTemplate(_downstreamTemplate).Build()
             };
+
+            public AdminstrationSettings AdminstrationSettings { get; }
         }
     }
 }

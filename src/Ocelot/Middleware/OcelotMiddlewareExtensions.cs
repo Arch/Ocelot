@@ -11,12 +11,16 @@ using Ocelot.Request.Middleware;
 using Ocelot.Requester.Middleware;
 using Ocelot.RequestId.Middleware;
 using Ocelot.Responder.Middleware;
+using Microsoft.AspNetCore.Hosting;
+using Ocelot.Configuration.Provider;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Ocelot.Middleware
 {
     using System;
     using System.Threading.Tasks;
     using Authorisation.Middleware;
+    using Configuration;
     using Microsoft.AspNetCore.Http;
 
     public static class OcelotMiddlewareExtensions
@@ -30,6 +34,61 @@ namespace Ocelot.Middleware
         {
             builder.UseOcelot(new OcelotMiddlewareConfiguration());
             return builder;
+        }
+
+        /// <summary>
+        /// Registers the Ocelot admin portal
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <returns></returns>
+        public static IApplicationBuilder UseOcelotPortal(this IApplicationBuilder builder, IHostingEnvironment env)
+        {
+            var configProvider = builder.ApplicationServices.GetService<IOcelotConfigurationProvider>();
+
+            var configResponse = configProvider.Get();
+
+            if (configResponse.IsError)
+            {
+                return builder;
+            }
+
+            if (AdminPagePathNotSet(configResponse.Data))
+            {
+                return builder;
+            }
+
+            builder.Map(configResponse.Data.AdminstrationSettings.AdminPagePath, map =>
+            {
+                if (env.IsDevelopment())
+                {
+                    map.UseDeveloperExceptionPage();
+                    map.UseDatabaseErrorPage();
+                    map.UseBrowserLink();
+                }
+                else
+                {
+                    map.UseExceptionHandler("/Home/Error");
+                }
+
+                map.UseStaticFiles();
+
+                map.UseIdentity();
+
+                // Add external authentication middleware below. To configure them please see http://go.microsoft.com/fwlink/?LinkID=532715
+
+                map.UseMvc(routes =>
+                {
+                    routes.MapRoute(
+                        name: "default",
+                        template: "{controller=Home}/{action=Index}/{id?}");
+                });
+            });
+            return builder;
+        }
+
+        private static bool AdminPagePathNotSet(IOcelotConfiguration config)
+        {
+            return string.IsNullOrEmpty(config.AdminstrationSettings?.AdminPagePath);
         }
 
         /// <summary>

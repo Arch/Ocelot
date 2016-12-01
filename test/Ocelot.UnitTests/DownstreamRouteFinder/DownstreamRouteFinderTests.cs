@@ -159,7 +159,7 @@ namespace Ocelot.UnitTests.DownstreamRouteFinder
             _reRoutesConfig = reRoutesConfig;
             _mockConfig
                 .Setup(x => x.Get())
-                .Returns(new OkResponse<IOcelotConfiguration>(new OcelotConfiguration(_reRoutesConfig)));
+                .Returns(new OkResponse<IOcelotConfiguration>(new OcelotConfiguration(_reRoutesConfig, It.IsAny<AdminstrationSettings>())));
         }
 
         private void GivenThereIsAnUpstreamUrlPath(string upstreamUrlPath)

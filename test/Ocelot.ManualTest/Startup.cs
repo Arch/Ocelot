@@ -8,6 +8,10 @@ using Microsoft.Extensions.Logging;
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
 using ConfigurationBuilder = Microsoft.Extensions.Configuration.ConfigurationBuilder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Ocelot.Configuration.Provider;
 
 namespace Ocelot.ManualTest
 {
@@ -29,7 +33,9 @@ namespace Ocelot.ManualTest
 
         public void ConfigureServices(IServiceCollection services)
         {
-            Action<ConfigurationBuilderCachePart> settings = (x) =>
+
+            // Add framework services.
+            Action<ConfigurationBuilderCachePart> cacheSettings = (x) =>
             {
                 x.WithMicrosoftLogging(log =>
                 {
@@ -38,14 +44,18 @@ namespace Ocelot.ManualTest
                 .WithDictionaryHandle();
             };
 
-            services.AddOcelotOutputCaching(settings);
+            services.AddOcelotOutputCaching(cacheSettings);
+
             services.AddOcelotFileConfiguration(Configuration);
-            services.AddOcelot();
+            
+            services.AddOcelot(new ServiceConfiguration(Configuration.GetConnectionString("DefaultConnection")));
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
+
+            app.UseOcelotPortal(env);
 
             app.UseOcelot();
         }

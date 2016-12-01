@@ -33,6 +33,8 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Ocelot.ManualTest", "test\O
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Ocelot.Benchmarks", "test\Ocelot.Benchmarks\Ocelot.Benchmarks.xproj", "{106B49E6-95F6-4A7B-B81C-96BFA74AF035}"
 EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "WebApplication1", "test\WebApplication1\WebApplication1.xproj", "{15B39070-29C6-45DE-A238-7110FFA4EA41}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -59,6 +61,10 @@ Global
 		{106B49E6-95F6-4A7B-B81C-96BFA74AF035}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{106B49E6-95F6-4A7B-B81C-96BFA74AF035}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{106B49E6-95F6-4A7B-B81C-96BFA74AF035}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15B39070-29C6-45DE-A238-7110FFA4EA41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15B39070-29C6-45DE-A238-7110FFA4EA41}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15B39070-29C6-45DE-A238-7110FFA4EA41}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15B39070-29C6-45DE-A238-7110FFA4EA41}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -69,5 +75,6 @@ Global
 		{F8C224FE-36BE-45F5-9B0E-666D8F4A9B52} = {5B401523-36DA-4491-B73A-7590A26E420B}
 		{02BBF4C5-517E-4157-8D21-4B8B9E118B7A} = {5B401523-36DA-4491-B73A-7590A26E420B}
 		{106B49E6-95F6-4A7B-B81C-96BFA74AF035} = {5B401523-36DA-4491-B73A-7590A26E420B}
+		{15B39070-29C6-45DE-A238-7110FFA4EA41} = {5B401523-36DA-4491-B73A-7590A26E420B}
 	EndGlobalSection
 EndGlobal

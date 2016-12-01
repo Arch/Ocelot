@@ -71,8 +71,27 @@ namespace Ocelot.Configuration.Creator
                 var ocelotReRoute = SetUpReRoute(reRoute, _options.Value.GlobalConfiguration);
                 reRoutes.Add(ocelotReRoute);
             }
+
+            var adminPagePath = CreateAdminPagePath();
+
+            var administrationSettings = new AdminstrationSettings(adminPagePath);
             
-            return new OcelotConfiguration(reRoutes);
+            return new OcelotConfiguration(reRoutes, administrationSettings);
+        }
+
+        private string CreateAdminPagePath()
+        {
+            var adminPagePath = _options.Value.AdministrationSettings?.AdminPagePath;
+
+            if (!string.IsNullOrEmpty(adminPagePath))
+            {
+                var firstCharacter = adminPagePath[0];
+                if (firstCharacter != '/')
+                {
+                    adminPagePath = $"/{adminPagePath}";
+                }
+            }
+            return adminPagePath;
         }
 
         private ReRoute SetUpReRoute(FileReRoute reRoute, FileGlobalConfiguration globalConfiguration)

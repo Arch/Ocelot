@@ -1,15 +1,15 @@
 {
-  "version": "1.0.0-*",
+    "version": "1.0.0-*",
 
-  "buildOptions": {
-    "copyToOutput": {
-        "include": [
-            "configuration.json"
-        ]
-    }
-  },
+    "buildOptions": {
+        "copyToOutput": {
+            "include": [
+                "configuration.json"
+            ]
+        }
+    },
 
-  "testRunner": "xunit",
+    "testRunner": "xunit",
 
     "dependencies": {
         "Microsoft.AspNetCore.Server.IISIntegration": "1.0.0",
@@ -37,10 +37,12 @@
         "TestStack.BDDfy": "4.3.2"
     },
 
-  "frameworks": {
-    "netcoreapp1.4": {
-      "imports": [
-      ]
+    "frameworks": {
+        "netcoreapp1.0": {
+            "imports": [
+                "dotnet5.6",
+                "portable-net45+win8"
+            ]
+        }
     }
-  }
 }

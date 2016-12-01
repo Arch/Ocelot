@@ -95,7 +95,7 @@ namespace Ocelot.AcceptanceTests
 
                     s.AddOcelotOutputCaching(settings);
                     s.AddOcelotFileConfiguration(configuration);
-                    s.AddOcelot();
+                    s.AddOcelot(new ServiceConfiguration(string.Empty));
                 })
                 .ConfigureLogging(l =>
                 {

@@ -44,7 +44,11 @@ namespace Ocelot.AcceptanceTests
                             UpstreamTemplate = "/",
                             UpstreamHttpMethod = "Get",
                         }
-                    }
+                    },
+                AdministrationSettings = new FileAdministrationSettings
+                {
+                    AdminPagePath = "dashboard"
+                }
             };
 
             this.Given(x => x.GivenThereIsAServiceRunningOn("http://localhost:51879", 200, "Hello from Laura"))
